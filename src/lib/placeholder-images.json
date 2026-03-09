@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "aviator-hero",
+      "description": "Abstract technological background representing flight and data analysis.",
+      "imageUrl": "https://picsum.photos/seed/aviator1/1200/400",
+      "imageHint": "technology flight"
+    },
+    {
+      "id": "analysis-bg",
+      "description": "Close up of a glowing digital display with graphs.",
+      "imageUrl": "https://picsum.photos/seed/aviator2/800/600",
+      "imageHint": "data analysis"
+    }
+  ]
 }
