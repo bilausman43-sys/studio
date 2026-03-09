@@ -1,0 +1,343 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Stores profile information for users of the Aviator Insights app, distinct from external authentication data.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "GameRound": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GameRound",
+      "type": "object",
+      "description": "Stores historical data for individual rounds of the Aviator game, collected for analysis.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the GameRound entity."
+        },
+        "crashMultiplier": {
+          "type": "number",
+          "description": "The multiplier at which the airplane crashed in this round."
+        },
+        "roundStartDateTime": {
+          "type": "string",
+          "description": "The date and time when this game round started.",
+          "format": "date-time"
+        },
+        "flightDurationSeconds": {
+          "type": "number",
+          "description": "The duration of the flight in seconds before crashing."
+        }
+      },
+      "required": [
+        "id",
+        "crashMultiplier",
+        "roundStartDateTime",
+        "flightDurationSeconds"
+      ]
+    },
+    "BettingStrategy": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BettingStrategy",
+      "type": "object",
+      "description": "Defines a user-created betting strategy that can be used for simulation and analysis.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the BettingStrategy entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N BettingStrategy)"
+        },
+        "name": {
+          "type": "string",
+          "description": "A user-defined name for the betting strategy (e.g., 'Martingale Basic', 'Conservative X')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the betting strategy, outlining its principles or goals."
+        },
+        "baseBetAmount": {
+          "type": "number",
+          "description": "The initial or base amount to bet when using this strategy."
+        },
+        "autoCashOutMultiplier": {
+          "type": "number",
+          "description": "The target multiplier at which the strategy attempts to cash out automatically. A value of 0 or null could mean manual cash out."
+        },
+        "stopLossAmount": {
+          "type": "number",
+          "description": "The maximum acceptable loss amount for a series of bets or a session when using this strategy."
+        },
+        "takeProfitAmount": {
+          "type": "number",
+          "description": "The target profit amount for a series of bets or a session when using this strategy."
+        },
+        "strategyRulesJson": {
+          "type": "string",
+          "description": "A JSON string representing the specific rules and logic of the betting strategy, allowing for flexible rule definition."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the betting strategy was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the betting strategy was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "description",
+        "baseBetAmount",
+        "strategyRulesJson",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserBet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserBet",
+      "type": "object",
+      "description": "Records an actual bet placed by a user in a real Aviator game, linking to historical game rounds.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserBet entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N UserBet)"
+        },
+        "gameRoundId": {
+          "type": "string",
+          "description": "Reference to GameRound. (Relationship: GameRound 1:N UserBet)"
+        },
+        "betAmount": {
+          "type": "number",
+          "description": "The amount of money placed in this bet."
+        },
+        "cashOutMultiplier": {
+          "type": "number",
+          "description": "The multiplier at which the user cashed out. If the bet was lost before cash-out, this could be 0 or null."
+        },
+        "actualProfitLoss": {
+          "type": "number",
+          "description": "The actual profit or loss from this specific bet (positive for profit, negative for loss)."
+        },
+        "betOutcome": {
+          "type": "string",
+          "description": "The outcome of the bet (e.g., 'win', 'loss', 'manual_cashout', 'auto_cashout')."
+        },
+        "betPlacedDateTime": {
+          "type": "string",
+          "description": "The date and time when the bet was placed.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "gameRoundId",
+        "betAmount",
+        "actualProfitLoss",
+        "betOutcome",
+        "betPlacedDateTime"
+      ]
+    },
+    "SimulationRun": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SimulationRun",
+      "type": "object",
+      "description": "Stores the results and parameters of a user's simulation of a betting strategy against historical data or a probabilistic model.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SimulationRun entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N SimulationRun)"
+        },
+        "bettingStrategyId": {
+          "type": "string",
+          "description": "Reference to BettingStrategy, if a specific defined strategy was used. (Relationship: BettingStrategy 1:N SimulationRun)"
+        },
+        "runDateTime": {
+          "type": "string",
+          "description": "The date and time when the simulation was executed.",
+          "format": "date-time"
+        },
+        "startBalance": {
+          "type": "number",
+          "description": "The initial virtual balance at the start of the simulation."
+        },
+        "endBalance": {
+          "type": "number",
+          "description": "The final virtual balance at the end of the simulation."
+        },
+        "totalProfitLoss": {
+          "type": "number",
+          "description": "The net profit or loss achieved during the simulation run (endBalance - startBalance)."
+        },
+        "totalBets": {
+          "type": "number",
+          "description": "The total number of individual bets simulated during the run."
+        },
+        "totalWins": {
+          "type": "number",
+          "description": "The total number of winning bets in the simulation."
+        },
+        "totalLosses": {
+          "type": "number",
+          "description": "The total number of losing bets in the simulation."
+        },
+        "simulationType": {
+          "type": "string",
+          "description": "Indicates whether the simulation used 'historical_data' or a 'probabilistic_model'."
+        },
+        "simulationParametersJson": {
+          "type": "string",
+          "description": "A JSON string containing the specific parameters used for this simulation run (e.g., range of historical rounds, probabilistic model settings)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "runDateTime",
+        "startBalance",
+        "endBalance",
+        "totalProfitLoss",
+        "totalBets",
+        "totalWins",
+        "totalLosses",
+        "simulationType",
+        "simulationParametersJson"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores profile information for a specific user, identified by their Firebase Authentication UID. Ownership is path-based, with `{userId}` matching `request.auth.uid`."
+        }
+      },
+      {
+        "path": "/game_rounds/{gameRoundId}",
+        "definition": {
+          "entityName": "GameRound",
+          "schema": {
+            "$ref": "#/backend/entities/GameRound"
+          },
+          "description": "Stores global historical Aviator game round data, used for analysis and simulations. This data is segregated as a top-level collection for shared access. This collection is designed to be readable by all and writable by authenticated users.",
+          "params": [
+            {
+              "name": "gameRoundId",
+              "description": "The unique identifier for a specific game round."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/betting_strategies/{bettingStrategyId}",
+        "definition": {
+          "entityName": "BettingStrategy",
+          "schema": {
+            "$ref": "#/backend/entities/BettingStrategy"
+          },
+          "description": "Stores user-defined betting strategies, private to the specific user. Includes denormalized 'userId' for authorization independence, ensuring `request.auth.uid` can directly validate ownership against the document's `userId` field and the path's `{userId}` segment.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns this betting strategy."
+            },
+            {
+              "name": "bettingStrategyId",
+              "description": "The unique identifier for a specific betting strategy."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/user_bets/{userBetId}",
+        "definition": {
+          "entityName": "UserBet",
+          "schema": {
+            "$ref": "#/backend/entities/UserBet"
+          },
+          "description": "Records individual bets placed by a user, private to the specific user. Includes denormalized 'userId' for authorization independence, allowing `request.auth.uid` to directly validate ownership against the document's `userId` field and the path's `{userId}` segment.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who placed this bet."
+            },
+            {
+              "name": "userBetId",
+              "description": "The unique identifier for a specific user bet."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/simulation_runs/{simulationRunId}",
+        "definition": {
+          "entityName": "SimulationRun",
+          "schema": {
+            "$ref": "#/backend/entities/SimulationRun"
+          },
+          "description": "Stores the results of a user's betting strategy simulations, private to the specific user. Includes denormalized 'userId' for authorization independence, enabling `request.auth.uid` to directly validate ownership against the document's `userId` field and the path's `{userId}` segment.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who ran this simulation."
+            },
+            {
+              "name": "simulationRunId",
+              "description": "The unique identifier for a specific simulation run."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed following the core principles of Authorization Independence, Structural Segregation, and Hierarchical Path-Based Access Modeling. Each user's private data (profile, betting strategies, bets, simulations) is nested under their unique `/users/{userId}` path, ensuring that `request.auth.uid` can be directly compared with the `{userId}` wildcard in the path for robust security rules. For example, `BettingStrategy`, `UserBet`, and `SimulationRun` documents each contain a `userId` field that matches the parent path's `{userId}` wildcard. This explicit denormalization eliminates the need for `get()` calls in security rules to check parent ownership, thus achieving crucial Authorization Independence and simplifying atomic operations. All documents within these user-specific subcollections inherently share the same security posture: full read/write access only by the owning user.\n\nFor `GameRound` data, which represents global historical data intended for shared analysis, a top-level collection `/game_rounds/{gameRoundId}` is used. This segregates global data from private user data, creating a homogeneous security posture for all `GameRound` documents. This collection is assumed to be publicly readable (for the AI tool and probabilistic indicator) and writable by any authenticated user (for data input), or potentially by specific roles if refined later. This separation directly supports Queryable Access Patterns (QAPs) by allowing `list` operations on `/game_rounds` to retrieve all historical data, while `list` operations on subcollections like `/users/{userId}/betting_strategies` are implicitly scoped to the authenticated user's data due to the path structure. This design promotes clear, debuggable security rules and scalable data management."
+  }
+}

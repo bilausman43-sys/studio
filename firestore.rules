@@ -1,0 +1,122 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * AVIATOR INSIGHTS SECURITY RULES
+     * 
+     * Core Philosophy:
+     * This ruleset implements a strict path-based ownership model for all user-specific data. 
+     * Security is anchored to the Firebase Authentication UID, which must match the {userId} 
+     * path segment for any private data access.
+     * 
+     * Data Structure:
+     * - /users/{userId}: Root profile for a user.
+     * - /users/{userId}/betting_strategies: Private strategies owned by the user.
+     * - /users/{userId}/user_bets: Private betting history for the user.
+     * - /users/{userId}/simulation_runs: Results of simulations run by the user.
+     * - /game_rounds: A top-level, shared collection containing global historical game data.
+     * 
+     * Key Security Decisions:
+     * 1. Authorization Independence: User-specific documents denormalize the 'userId' 
+     *    field. This allows rules to validate ownership by comparing the path, the 
+     *    auth token, and the document data without performing cross-document lookups (get() calls).
+     * 2. Public History: GameRound data is publicly readable to support analysis tools, 
+     *    while write access is restricted to authenticated users to allow for community-driven data entry.
+     * 3. Immutability: Relational fields (like userId) are enforced as immutable during 
+     *    updates to prevent data being "re-parented" to other users.
+     * 4. Prototyping Flexibility: While authorization is strictly enforced, the specific 
+     *    internal fields of documents (except for IDs and ownership links) are not 
+     *    schema-validated to allow for rapid frontend iteration.
+     */
+
+    // --- Helper Functions ---
+
+    /** Checks if the request is from a signed-in user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** Checks if the user's UID matches the provided ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** Combines ownership check with existence check for updates and deletes. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    // --- Rules ---
+
+    /**
+     * @description Rules for the UserProfile entity. Only the user themselves can read or write their profile.
+     * @path /users/{userId}
+     * @allow (create) User 'abc' creating /users/abc
+     * @deny (get) User 'abc' reading /users/xyz
+     * @principle Path-based ownership and self-creation validation.
+     */
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Rules for user-defined Betting Strategies. Private to the owning user.
+       * @path /users/{userId}/betting_strategies/{bettingStrategyId}
+       * @allow (list) User 'abc' listing /users/abc/betting_strategies
+       * @deny (create) User 'abc' creating a strategy with userId 'xyz'
+       * @principle Relational integrity and ownership enforcement.
+       */
+      match /betting_strategies/{bettingStrategyId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Records of individual bets placed by a user. Restricted to the owner.
+       * @path /users/{userId}/user_bets/{userBetId}
+       * @allow (get) User 'abc' fetching /users/abc/user_bets/bet123
+       * @deny (update) User 'abc' attempting to change the userId of an existing bet
+       * @principle Resource ownership and field immutability.
+       */
+      match /user_bets/{userBetId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Results of simulations run by a user. Restricted to the owner.
+       * @path /users/{userId}/simulation_runs/{simulationRunId}
+       * @allow (create) User 'abc' saving a new simulation result to their own subcollection.
+       * @deny (list) Anonymous user attempting to list simulations for a specific user.
+       * @principle Path-based access control.
+       */
+      match /simulation_runs/{simulationRunId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Global historical data for Aviator game rounds. Publicly readable for analysis.
+     * @path /game_rounds/{gameRoundId}
+     * @allow (get) Any user (including anonymous) reading game round history.
+     * @allow (create) Any authenticated user submitting new historical data.
+     * @deny (create) Anonymous user trying to write data.
+     * @principle Public read with authenticated-only writes for shared data.
+     */
+    match /game_rounds/{gameRoundId} {
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource != null;
+    }
+  }
+}
